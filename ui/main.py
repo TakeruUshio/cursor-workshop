@@ -14,6 +14,21 @@ def main() -> None:
     # --- 登録済み商品一覧 ---
     st.subheader("登録済み商品一覧")
 
+    # セッション状態に商品リストがなければ初期化
+    if "products" not in st.session_state:
+        st.session_state.products = []
+
+    # 商品一覧表示
+    if not st.session_state.products:
+        st.info("まだ商品が登録されていません。")
+    else:
+        for product in st.session_state.products:
+            with st.container():
+                st.write(f"ID: {product.get('id', 'N/A')}")
+                st.write(f"商品名: {product.get('name', 'N/A')}")
+                st.write(f"価格: {product.get('price', 'N/A')} 円")
+                st.write(f"登録日時: {product.get('created_at', 'N/A')}")
+
 
 if __name__ == "__main__":
     main()
