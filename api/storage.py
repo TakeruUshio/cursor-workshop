@@ -1,10 +1,14 @@
-from .models import ProductCreate, ProductModel
+from models import ProductCreate, ProductModel
 
 
 class InMemoryStorage:
     """インメモリで商品データを管理するストレージクラス"""
 
     def __init__(self) -> None:
+        self.reset()
+
+    def reset(self) -> None:
+        """ストレージを初期化する"""
         self._products: dict[int, ProductModel] = {}
         self._next_id: int = 1
 
