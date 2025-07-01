@@ -1,11 +1,17 @@
-from fastapi import FastAPI, HTTPException
-from starlette import status
+from typing import List
 
-from .models import ProductCreate, ProductModel
-from .storage import InMemoryStorage
+from fastapi import FastAPI, HTTPException, status
+from models import ProductCreate, ProductModel
+from storage import InMemoryStorage
 
 app = FastAPI(title="商品管理API")
 storage = InMemoryStorage()
+
+
+@app.on_event("startup")
+async def startup_event() -> None:
+    """アプリケーション起動時にストレージを初期化する"""
+    storage.reset()
 
 
 @app.get("/health", summary="ヘルスチェック", status_code=status.HTTP_200_OK)
