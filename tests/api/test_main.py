@@ -61,3 +61,32 @@ async def test_create_product_with_invalid_data_returns_422(
 
     assert response.status_code == 422
     assert error_message in response.text
+
+
+@pytest.mark.anyio
+async def test_get_product_with_existing_id_returns_200() -> None:
+    """GET /items/{id} が存在するIDの場合に 200 OK と商品データを返すことをテストする"""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        # まず商品を作成
+        create_response = await client.post("/items", json={"name": "テスト商品", "price": 1000})
+        assert create_response.status_code == 201
+        created_product_id = create_response.json()["id"]
+
+        # 作成した商品をIDで取得
+        get_response = await client.get(f"/items/{created_product_id}")
+
+    assert get_response.status_code == 200
+    data = get_response.json()
+    assert data["id"] == created_product_id
+    assert data["name"] == "テスト商品"
+    assert data["price"] == 1000
+
+
+@pytest.mark.anyio
+async def test_get_product_with_non_existing_id_returns_404() -> None:
+    """GET /items/{id} が存在しないIDの場合に 404 Not Found を返すことをテストする"""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get("/items/999")  # 存在しないID
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Product not found"}

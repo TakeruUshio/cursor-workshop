@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from starlette import status
 
 from .models import ProductCreate, ProductModel
@@ -23,3 +23,17 @@ async def health_check() -> dict[str, str]:
 async def create_item(item: ProductCreate) -> ProductModel:
     """新しい商品を作成する"""
     return storage.create_product(item)
+
+
+@app.get(
+    "/items/{item_id}",
+    response_model=ProductModel,
+    status_code=status.HTTP_200_OK,
+    summary="商品取得",
+)
+async def get_item(item_id: int) -> ProductModel:
+    """IDで指定された商品を取得する"""
+    product = storage.get_product(item_id)
+    if not product:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+    return product
