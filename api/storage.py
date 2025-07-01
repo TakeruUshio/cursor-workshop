@@ -1,4 +1,4 @@
-from models import ProductCreate, ProductModel
+from .models import ProductCreate, ProductModel
 
 
 class InMemoryStorage:
