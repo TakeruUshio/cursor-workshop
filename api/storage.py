@@ -1,4 +1,4 @@
-from .models import ProductModel
+from .models import ProductCreate, ProductModel
 
 
 class InMemoryStorage:
@@ -8,9 +8,13 @@ class InMemoryStorage:
         self._products: dict[int, ProductModel] = {}
         self._next_id: int = 1
 
-    def create_product(self, product_data: dict) -> ProductModel:
-        """商品を新規作成する (Task #4で実装)"""
-        raise NotImplementedError
+    def create_product(self, product_create: ProductCreate) -> ProductModel:
+        """商品を新規作成する"""
+        product_id = self._next_id
+        product = ProductModel(id=product_id, **product_create.model_dump())
+        self._products[product_id] = product
+        self._next_id += 1
+        return product
 
     def get_product(self, product_id: int) -> ProductModel | None:
         """商品IDを指定して商品を取得する (Task #5で実装)"""
