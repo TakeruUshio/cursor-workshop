@@ -1,8 +1,9 @@
 from typing import List
 
 from fastapi import FastAPI, HTTPException, status
-from models import ProductCreate, ProductModel
-from storage import InMemoryStorage
+
+from .models import ProductCreate, ProductModel
+from .storage import InMemoryStorage
 
 app = FastAPI(title="商品管理API")
 storage = InMemoryStorage()
