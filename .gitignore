@@ -31,3 +31,6 @@ instance/
 # Google Cloud credentials
 service-account.json
 *-service-account.json
+
+# uv
+**/uv.lock
