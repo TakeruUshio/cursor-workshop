@@ -42,7 +42,7 @@ jobs:
 
       - name: Start API server in background
         run: |
-          nohup uv run uvicorn api.main:create_app --factory --port 8000 > uvicorn.log 2>&1 &
+          nohup uv run uvicorn api.main:create_app --factory --port 8000 --app-dir . --log-level debug > uvicorn.log 2>&1 &
           echo "API server starting..."
 
       - name: Start UI server in background
