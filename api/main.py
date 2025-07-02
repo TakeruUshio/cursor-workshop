@@ -1,4 +1,5 @@
-from typing import List
+from contextlib import asynccontextmanager
+from typing import AsyncIterator, List
 
 from fastapi import FastAPI, HTTPException, status
 
@@ -8,13 +9,17 @@ from .storage import InMemoryStorage
 
 def create_app() -> FastAPI:
     """FastAPIアプリケーションインスタンスを生成するファクトリ関数"""
-    app = FastAPI(title="商品管理API")
     storage = InMemoryStorage()
 
-    @app.on_event("startup")
-    async def startup_event() -> None:
-        """アプリケーション起動時にストレージを初期化する"""
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        """アプリケーションのライフサイクルを管理する"""
+        # 起動時の処理
         storage.reset()
+        yield
+        # 終了時の処理 (今回はなし)
+
+    app = FastAPI(title="商品管理API", lifespan=lifespan)
 
     @app.get("/health", summary="ヘルスチェック", status_code=status.HTTP_200_OK)
     async def health_check() -> dict[str, str]:
