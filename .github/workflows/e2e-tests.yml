@@ -1,0 +1,72 @@
+# .github/workflows/e2e-tests.yml
+
+name: E2E Tests
+
+# mainブランチへのプルリクエストが作成・更新された時に実行
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  e2e-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Cache uv dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('**/uv.lock') }}
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/uv.lock') }}
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Install Playwright browsers
+        run: uv run playwright install --with-deps
+
+      - name: Start API server in background
+        run: |
+          nohup uv run uvicorn api.main:create_app --factory --port 8000 --app-dir . --log-level debug > uvicorn.log 2>&1 &
+          echo "API server starting..."
+
+      - name: Start UI server in background
+        run: |
+          nohup uv run streamlit run ui/main.py --server.port 8501 --server.headless true > streamlit.log 2>&1 &
+          echo "UI server starting..."
+
+      - name: Wait for servers to start
+        run: |
+          echo "Waiting for API server..."
+          timeout 30s bash -c 'until curl -s http://localhost:8000/health | grep "ok"; do echo "Waiting for API server..."; sleep 1; done'
+
+          echo "Waiting for UI server..."
+          timeout 30s bash -c 'until curl -s http://localhost:8501 > /dev/null; do echo "Waiting for UI server..."; sleep 1; done'
+
+          echo "Servers are ready."
+
+      - name: Run E2E tests
+        run: uv run pytest tests/test_e2e_product_journey.py
+
+      - name: (Debug) Show server logs if tests fail
+        if: failure()
+        run: |
+          echo "--- Uvicorn Log ---"
+          cat uvicorn.log || echo "Uvicorn log not found."
+          echo "--- Streamlit Log ---"
+          cat streamlit.log || echo "Streamlit log not found."
