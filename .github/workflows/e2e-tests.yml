@@ -35,7 +35,7 @@ jobs:
           key: ${{ runner.os }}-playwright-${{ hashFiles('**/uv.lock') }}
 
       - name: Install dependencies
-        run: uv sync --system-site-packages
+        run: uv sync
 
       - name: Install Playwright browsers
         run: uv run playwright install --with-deps
@@ -43,18 +43,22 @@ jobs:
       - name: Start API server in background
         run: |
           nohup uv run uvicorn api.main:app --port 8000 > uvicorn.log 2>&1 &
-          echo "API server started."
+          echo "API server starting..."
 
       - name: Start UI server in background
         run: |
-          nohup uv run streamlit run ui/main.py --server.port 8501 > streamlit.log 2>&1 &
-          echo "UI server started."
+          nohup uv run streamlit run ui/main.py --server.port 8501 --server.headless true > streamlit.log 2>&1 &
+          echo "UI server starting..."
 
       - name: Wait for servers to start
         run: |
-          echo "Waiting for servers to be ready..."
-          sleep 15 # サーバーが完全に起動するまで待機します
-          echo "Servers should be ready."
+          echo "Waiting for API server..."
+          timeout 30s bash -c 'until curl -s http://localhost:8000/docs > /dev/null; do echo "Waiting for API server..."; sleep 1; done'
+
+          echo "Waiting for UI server..."
+          timeout 30s bash -c 'until curl -s http://localhost:8501 > /dev/null; do echo "Waiting for UI server..."; sleep 1; done'
+
+          echo "Servers are ready."
 
       - name: Run E2E tests
         run: uv run pytest tests/test_e2e_product_journey.py
@@ -63,6 +67,6 @@ jobs:
         if: failure()
         run: |
           echo "--- Uvicorn Log ---"
-          cat uvicorn.log
+          cat uvicorn.log || echo "Uvicorn log not found."
           echo "--- Streamlit Log ---"
-          cat streamlit.log
+          cat streamlit.log || echo "Streamlit log not found."
