@@ -119,3 +119,8 @@ exclude = ["**/node_modules", "**/__pycache__", ".venv"]
 reportMissingTypeStubs = false
 typeCheckingMode = "basic"
 
+[dependency-groups]
+dev = [
+    "pytest-playwright>=0.7.0",
+]
+
