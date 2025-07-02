@@ -1,13 +1,9 @@
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from api.main import app, storage
+from api.main import create_app
 
-
-@pytest.fixture(autouse=True)
-def reset_storage() -> None:
-    """各テストの前にストレージの状態をリセットする"""
-    storage.__init__()
+app = create_app()
 
 
 @pytest.mark.anyio
@@ -33,6 +29,7 @@ async def test_create_product_returns_201() -> None:
 @pytest.mark.anyio
 async def test_create_product_returns_created_product() -> None:
     """POST /items が作成された商品データを返すことをテストする"""
+    # 各テストは独立しているため、startupイベントでストレージがリセットされる
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         response = await client.post("/items", json={"name": "テスト商品", "price": 1000})
 
